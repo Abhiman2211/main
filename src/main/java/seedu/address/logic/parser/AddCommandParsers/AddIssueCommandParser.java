@@ -43,8 +43,6 @@ public class AddIssueCommandParser implements Parser<AddCommand> {
         Email email = ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get());
         Set<Tag> tagList = ParserUtil.parseTags(argMultimap.getAllValues(PREFIX_TAG));
 
-        Person person = new Person(name, phone, email, tagList);
-
-        return new AddCommand(person);
+        return null;
     }
 }
