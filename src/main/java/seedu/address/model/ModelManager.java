@@ -10,9 +10,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+
 import seedu.address.commons.Predicates;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -99,9 +101,9 @@ public class ModelManager implements Model {
             } else {
                 this.participantList = storageParticipantList.get();
                 int largestIdUsed = participantList.list().stream()
-                        .map(participant -> ((Entity) participant).getId().getNumber())
+                        .map(participant -> participant.getId().getNumber())
                         .max(Integer::compare).orElse(0);
-                participantList.setLastUsedId(largestIdUsed);
+                ParticipantList.setLastUsedId(largestIdUsed);
             }
         } catch (AlfredException e) {
             logger.warning("Initialising new ParticipantList. "
@@ -116,9 +118,9 @@ public class ModelManager implements Model {
             } else {
                 this.mentorList = storageMentorList.get();
                 int largestIdUsed = mentorList.list().stream()
-                        .map(mentor -> ((Entity) mentor).getId().getNumber())
+                        .map(mentor -> mentor.getId().getNumber())
                         .max(Integer::compare).orElse(0);
-                mentorList.setLastUsedId(largestIdUsed);
+                MentorList.setLastUsedId(largestIdUsed);
             }
         } catch (AlfredException e) {
             logger.warning("Initialising new MentorList. "
@@ -133,9 +135,9 @@ public class ModelManager implements Model {
             } else {
                 this.teamList = storageTeamList.get();
                 int largestIdUsed = teamList.list().stream()
-                        .map(team -> ((Entity) team).getId().getNumber())
+                        .map(team -> team.getId().getNumber())
                         .max(Integer::compare).orElse(0);
-                teamList.setLastUsedId(largestIdUsed);
+                TeamList.setLastUsedId(largestIdUsed);
             }
         } catch (AlfredException e) {
             logger.warning("Initialising new TeamList. "
@@ -659,55 +661,61 @@ public class ModelManager implements Model {
     /**
      * This method searches for all participants whose name matches the param.
      *
-     * @param name
+     * @param predicate
      * @return {@code List<Participant>}
      */
-    public List<Participant> findParticipantByName(String name) {
-        List<Participant> results = new ArrayList<>();
-        for (Participant p: this.participantList.getSpecificTypedList()) {
-            if (p.getName().toString().contains(name)) {
-                results.add(p);
-            }
-        }
-        this.filteredParticipantList.setPredicate(
-                Predicates.getPredicateFindEntityByName(name));
-        return results;
+    public List<Participant> findParticipant(Predicate<Participant> predicate) {
+        this.filteredParticipantList.setPredicate(predicate);
+        return this.participantList.getSpecificTypedList().stream()
+                .filter(predicate).collect(Collectors.toList());
     }
 
     /**
      * This method searches for all teams whose name matches the param.
      *
-     * @param name
+     * @param predicate
      * @return {@code List<Team>}
      */
-    public List<Team> findTeamByName(String name) {
-        List<Team> results = new ArrayList<>();
-        for (Team t: this.teamList.getSpecificTypedList()) {
-            if (t.getName().toString().contains(name)) {
-                results.add(t);
-            }
-        }
-        this.filteredTeamList.setPredicate(
-                Predicates.getPredicateFindEntityByName(name));
-        return results;
+    public List<Team> findTeam(Predicate<Team> predicate) {
+        this.filteredTeamList.setPredicate(predicate);
+        return this.teamList.getSpecificTypedList().stream()
+                .filter(predicate).collect(Collectors.toList());
     }
 
     /**
      * This method searches for all mentors whose name matches the param.
      *
-     * @param name
+     * @param predicate
      * @return {@code List<Mentor>}
      */
-    public List<Mentor> findMentorByName(String name) {
-        List<Mentor> results = new ArrayList<>();
-        for (Mentor m: this.mentorList.getSpecificTypedList()) {
-            if (m.getName().toString().contains(name)) {
-                results.add(m);
-            }
+    public List<Mentor> findMentor(Predicate<Mentor> predicate) {
+        this.filteredMentorList.setPredicate(predicate);
+        return this.mentorList.getSpecificTypedList().stream()
+                .filter(predicate).collect(Collectors.toList());
+    }
+
+    /**
+     * Sets the predicate to show detailed information of {@code entity}.
+     *
+     * @param entity {@code Entity} to view.
+     */
+    public void viewEntity(Entity entity) {
+        PrefixType entityType = entity.getPrefix();
+        Predicate<Entity> predicate = Predicates.viewSpecifiedEntity(entity);
+        switch (entityType) {
+        case M:
+            this.filteredMentorList.setPredicate(predicate);
+            return;
+        case P:
+            this.filteredParticipantList.setPredicate(predicate);
+            return;
+        case T:
+            this.filteredTeamList.setPredicate(predicate);
+            return;
+        default:
+            // should never reach here
+            throw new RuntimeException();
         }
-        this.filteredMentorList.setPredicate(
-                Predicates.getPredicateFindEntityByName(name));
-        return results;
     }
 
     //=========== AddressBook ================================================================================

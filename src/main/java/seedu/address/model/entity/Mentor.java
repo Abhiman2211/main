@@ -116,15 +116,15 @@ public class Mentor extends Entity {
 
         builder.append(" Name: ")
                 .append(getName())
-                .append(" ID: ")
+                .append(", ID: ")
                 .append(getId())
-                .append(" Phone: ")
+                .append(", Phone: ")
                 .append(getPhone())
-                .append(" Email: ")
+                .append(", Email: ")
                 .append(getEmail())
-                .append(" Organization: ")
+                .append(", Organization: ")
                 .append(getOrganization())
-                .append(" Subject: ")
+                .append(", Subject: ")
                 .append(getSubject());
 
         return builder.toString();
@@ -146,6 +146,7 @@ public class Mentor extends Entity {
             return false;
         }
 
+
         Mentor otherMentor = ((Mentor) other);
         return otherMentor.getName().equals(this.getName())
                 && otherMentor.getId().equals(this.getId())
@@ -166,17 +167,6 @@ public class Mentor extends Entity {
             return true;
         }
 
-        /*  To be deleted, logger is used for checking only
-        if (this.name.equals(otherMentor.getName()))
-            logger.info("New Mentor has the same name as existing mentor " + this.name + " and " + otherMentor.name);
-        if (this.phone.equals(otherMentor.getPhone()))
-            logger.severe("New Mentor has the same phone number as existing mentor "
-                    + this.phone + " and " + otherMentor.getPhone());
-        if (this.email.equals(otherMentor.getEmail()))
-            logger.info("New Mentor has the same email as existing mentor " + this.email + " and " + otherMentor.email);
-            */
-
-
         return this.name.equals(otherMentor.getName())
                 && (this.phone.equals(otherMentor.getPhone())
                 || this.email.equals(otherMentor.getEmail()));
@@ -195,4 +185,10 @@ public class Mentor extends Entity {
                                  this.subject);
         return copy;
     }
+
+    @Override
+    public PrefixType getPrefix() {
+        return PrefixType.M;
+    }
+
 }

@@ -104,11 +104,11 @@ public class Participant extends Entity {
         StringBuilder builder = new StringBuilder();
         builder.append(" Name: ")
                 .append(getName())
-                .append(" ID: ")
+                .append(", ID: ")
                 .append(getId())
-                .append(" Phone: ")
+                .append(", Phone: ")
                 .append(getPhone())
-                .append(" Email: ")
+                .append(", Email: ")
                 .append(getEmail());
 
         return builder.toString();
@@ -141,4 +141,10 @@ public class Participant extends Entity {
                                            this.phone.copy());
         return copy;
     }
+
+    @Override
+    public PrefixType getPrefix() {
+        return PrefixType.P;
+    }
+
 }
