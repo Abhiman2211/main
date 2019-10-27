@@ -3,6 +3,7 @@ package seedu.address.stub;
 import java.util.List;
 import java.util.Optional;
 
+import javafx.collections.transformation.FilteredList;
 import seedu.address.commons.exceptions.AlfredException;
 import seedu.address.commons.exceptions.AlfredModelException;
 import seedu.address.commons.exceptions.MissingEntityException;
@@ -24,6 +25,12 @@ public class ModelManagerStub extends ModelManager {
     public ModelManagerStub() {
         // TODO: user constructor for Alfred later
         super();
+        this.filteredParticipantList =
+                new FilteredList<>(this.participantList.getSpecificTypedList());
+        this.filteredMentorList =
+                new FilteredList<>(this.mentorList.getSpecificTypedList());
+        this.filteredTeamList =
+                new FilteredList<>(this.teamList.getSpecificTypedList());
     }
 
     //========== Entity Methods =============================
@@ -255,7 +262,20 @@ public class ModelManagerStub extends ModelManager {
      */
     @Override
     public void updateHistory(Command c) {
+    }
 
+    /**
+     * Placeholder method simulating the undoing of a command in ModelHistory
+     */
+    @Override
+    public void undo() {
+    }
+
+    /**
+     * Placeholder method simulating the redoing of a command in ModelHistory
+     */
+    @Override
+    public void redo() {
     }
 
     /**
