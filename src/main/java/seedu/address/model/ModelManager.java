@@ -25,6 +25,7 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.AlfredException;
 import seedu.address.commons.exceptions.AlfredModelException;
 import seedu.address.commons.exceptions.AlfredModelHistoryException;
+import seedu.address.commons.exceptions.AlfredRuntimeException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.exceptions.MissingEntityException;
 import seedu.address.commons.exceptions.ModelValidationException;
@@ -119,7 +120,7 @@ public class ModelManager implements Model {
             }
         } catch (AlfredException e) {
             logger.warning("Initialising new ParticipantList. "
-                           + "Problem encountered reading ParticipantList from storage: " + e.getMessage());
+                    + "Problem encountered reading ParticipantList from storage: " + e.getMessage());
             this.participantList = new ParticipantList();
         }
 
@@ -136,7 +137,7 @@ public class ModelManager implements Model {
             }
         } catch (AlfredException e) {
             logger.warning("Initialising new MentorList. "
-                           + "Problem encountered reading MentorList from storage: " + e.getMessage());
+                    + "Problem encountered reading MentorList from storage: " + e.getMessage());
             this.mentorList = new MentorList();
         }
 
@@ -153,14 +154,14 @@ public class ModelManager implements Model {
             }
         } catch (AlfredException e) {
             logger.warning("Initialising new TeamList. "
-                           + "Problem encountered reading TeamList from storage: " + e.getMessage());
+                    + "Problem encountered reading TeamList from storage: " + e.getMessage());
             this.teamList = new TeamList();
         }
 
         //The following try-catch block is necessary to ensure that the teamList loaded is valid
         //and the data has not been tampered with.
         try {
-            for (Team t: this.teamList.getSpecificTypedList()) {
+            for (Team t : this.teamList.getSpecificTypedList()) {
                 validateNewTeamObject(t);
             }
         } catch (ModelValidationException e) {
@@ -369,22 +370,22 @@ public class ModelManager implements Model {
      * @return Participant
      */
     public Participant deleteParticipant(Id id) throws AlfredException {
+        Participant participantToDelete = this.participantList.delete(id); // May throw MissingEntityException here
+        this.saveList(PrefixType.P);
+
         Team targetTeam;
         try {
             targetTeam = this.getTeamByParticipantId(id);
         } catch (MissingEntityException e) {
-            Participant participantToDelete = this.participantList.delete(id);
-            this.saveList(PrefixType.P);
             return participantToDelete;
         }
-        Participant participantToDelete = this.participantList.delete(id);
+
         boolean isSuccessful = targetTeam.deleteParticipant(participantToDelete);
         if (!isSuccessful) {
             logger.warning("Participant does not exist");
             throw new ModelValidationException("Participant does not exist");
         }
 
-        this.saveList(PrefixType.P);
         this.saveList(PrefixType.T);
         return participantToDelete;
     }
@@ -411,8 +412,8 @@ public class ModelManager implements Model {
      */
     public Team getTeamByParticipantId(Id participantId) throws MissingEntityException {
         List<Team> teams = this.teamList.getSpecificTypedList();
-        for (Team t: teams) {
-            for (Participant p: t.getParticipants()) {
+        for (Team t : teams) {
+            for (Participant p : t.getParticipants()) {
                 if (p.getId().equals(participantId)) {
                     return t;
                 }
@@ -430,7 +431,7 @@ public class ModelManager implements Model {
      */
     public Team getTeamByMentorId(Id mentorId) throws MissingEntityException {
         List<Team> teams = this.teamList.getSpecificTypedList();
-        for (Team t: teams) {
+        for (Team t : teams) {
             Optional<Mentor> mentor = t.getMentor();
             if (mentor.isPresent()) {
                 if (mentor.get().getId().equals(mentorId)) {
@@ -457,7 +458,7 @@ public class ModelManager implements Model {
     /**
      * Updates the given team's score with the given score.
      *
-     * @param team the team who's score is to be updated.
+     * @param team  the team who's score is to be updated.
      * @param score the score to which the team's score will be updated.
      * @throws AlfredException if the update fails.
      */
@@ -469,7 +470,7 @@ public class ModelManager implements Model {
     /**
      * Adds to the given team's score the given score.
      *
-     * @param team the team who's score is to be added to.
+     * @param team  the team who's score is to be added to.
      * @param score the score by which the team's score will be increased.
      * @throws AlfredException if the update fails.
      */
@@ -491,7 +492,7 @@ public class ModelManager implements Model {
     /**
      * Subtracts the given score from the given team's current score.
      *
-     * @param team the team who's score is to be subtracted from.
+     * @param team  the team who's score is to be subtracted from.
      * @param score the score which will be subtracted from the team's current score.
      * @throws AlfredException if the update fails.
      */
@@ -550,6 +551,34 @@ public class ModelManager implements Model {
     }
 
     /**
+     * Removes the participant from the given team.
+     *
+     * @param teamId
+     * @param participant
+     * @throws AlfredException if the team does not exist.
+     */
+    public void removeParticipantFromTeam(Id teamId, Participant participant) throws AlfredException {
+        if (!this.participantList.contains(participant.getId())) {
+            throw new ModelValidationException("Participant does not exist in participantList");
+        }
+
+        Team targetTeam;
+        try {
+            targetTeam = this.getTeam(teamId);
+        } catch (MissingEntityException e) {
+            throw e;
+        }
+        boolean isSuccessful = targetTeam.deleteParticipant(participant);
+
+        if (!isSuccessful) {
+            logger.severe("Team does not have this Participant");
+            throw new AlfredModelException("Team does not have this Participant");
+        }
+        this.saveList(PrefixType.T);
+    }
+
+
+    /**
      * Adds the participant to the given team.
      *
      * @param teamId
@@ -576,6 +605,32 @@ public class ModelManager implements Model {
     }
 
     /**
+     * Removes the mentor from the given team.
+     *
+     * @param teamId
+     * @param mentor
+     * @throws AlfredException if the team does not exist.
+     */
+    public void removeMentorFromTeam(Id teamId, Mentor mentor) throws AlfredException {
+        if (!this.mentorList.contains(mentor.getId())) {
+            throw new ModelValidationException("Mentor does not exist in mentorList.");
+        }
+
+        Team targetTeam;
+        try {
+            targetTeam = this.getTeam(teamId);
+        } catch (MissingEntityException e) {
+            throw e;
+        }
+        boolean isSuccessful = targetTeam.deleteMentor(mentor);
+        if (!isSuccessful) {
+            logger.severe("Team does not have this Mentor");
+            throw new AlfredModelException("Team does not have this Mentorr");
+        }
+        this.saveList(PrefixType.T);
+    }
+
+    /**
      * Deletes the team.
      *
      * @param id
@@ -585,11 +640,21 @@ public class ModelManager implements Model {
     public Team deleteTeam(Id id) throws AlfredException {
         // First delete the Participant objects
         Team teamToDelete = this.teamList.delete(id);
+
+        boolean allParticipantsDeleted = true;
         for (Participant p : teamToDelete.getParticipants()) {
-            this.participantList.delete(p.getId());
+            try {
+                this.participantList.delete(p.getId());
+            } catch (MissingEntityException e) {
+                allParticipantsDeleted = false;
+            }
         }
         this.saveList(PrefixType.T);
         this.saveList(PrefixType.P);
+
+        if (!allParticipantsDeleted) {
+            throw new AlfredRuntimeException("Duplicate assigning of teams for certain participants.");
+        }
 
         return teamToDelete;
     }
@@ -655,23 +720,22 @@ public class ModelManager implements Model {
      * @throws AlfredException
      */
     public Mentor deleteMentor(Id id) throws AlfredException {
+        Mentor mentorToDelete = this.mentorList.delete(id); // May throw MissingEntityException here
+        this.saveList(PrefixType.M);
+
         Team targetTeam;
         try {
             targetTeam = this.getTeamByMentorId(id);
         } catch (MissingEntityException e) {
-            Mentor mentorToDelete = this.mentorList.delete(id);
-            this.saveList(PrefixType.M);
             return mentorToDelete;
         }
 
-        Mentor mentorToDelete = this.getMentor(id);
         boolean isSuccessful = targetTeam.deleteMentor(mentorToDelete);
         if (!isSuccessful) {
             logger.severe("Unable to delete the mentor from the team");
             throw new AlfredModelException("Update to delete the mentor from the team");
         }
 
-        this.saveList(PrefixType.M);
         this.saveList(PrefixType.T);
         return mentorToDelete;
     }
@@ -680,11 +744,12 @@ public class ModelManager implements Model {
 
     /**
      * Helper function to save the lists.
+     *
      * @param type
      */
     private void saveList(PrefixType type) {
         try {
-            switch(type) {
+            switch (type) {
             case T:
                 this.storage.saveTeamList(this.teamList);
                 break;
@@ -711,7 +776,7 @@ public class ModelManager implements Model {
      */
     private void validateNewTeamObject(Team team) throws ModelValidationException {
         // Check if the participants are valid, then if mentor is valid.
-        for (Participant p: team.getParticipants()) {
+        for (Participant p : team.getParticipants()) {
             if (!this.participantList.contains(p.getId())) {
                 throw new ModelValidationException("Participant in team does not exist in ParticipantList");
             }
@@ -857,6 +922,7 @@ public class ModelManager implements Model {
     }
 
     //========== ModelHistory Methods ===============
+
     /**
      * This method will update the ModelHistoryManager object with the current state of the model.
      * This method is expected to be called during the `execute()` method of each Command, right after
@@ -875,6 +941,7 @@ public class ModelManager implements Model {
     /**
      * This method will undo the effects of the previous command executed and return the state of
      * the ModelManager to the state where the previous command executed is undone.
+     *
      * @throws AlfredModelHistoryException
      */
     public void undo() throws AlfredModelHistoryException {
@@ -888,6 +955,7 @@ public class ModelManager implements Model {
 
     /**
      * This method will return the ModelManager to the state where the previous command executed is redone.
+     *
      * @throws AlfredModelHistoryException
      */
     public void redo() throws AlfredModelHistoryException {
@@ -901,6 +969,7 @@ public class ModelManager implements Model {
 
     /**
      * Updates the current Model state (for each of the EntityLists and their lastUsedIDs) using a ModelHistoryRecord.
+     *
      * @param hr ModelHistoryRecord containing the state of each of the EntityLists and their lastUsedIDs.
      * @throws AlfredModelHistoryException
      */
