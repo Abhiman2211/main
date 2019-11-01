@@ -15,6 +15,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.AlfredModelHistoryException;
@@ -89,6 +90,7 @@ public class MainWindow extends UiPart<Stage> {
         setAccelerators();
 
         helpWindow = new HelpWindow();
+        lastFired = participantsButton;
     }
 
     public Stage getPrimaryStage() {
@@ -135,8 +137,9 @@ public class MainWindow extends UiPart<Stage> {
      */
     void fillInnerParts() {
         //Displays the list of teams during application start up
-        entityListPanel = new EntityListPanel(logic.getFilteredTeamList());
+        entityListPanel = new EntityListPanel(logic.getFilteredParticipantList());
         listPanelPlaceholder.getChildren().add(entityListPanel.getRoot());
+
 
         resultDisplay = new ResultDisplay();
         resultDisplayPlaceholder.getChildren().add(resultDisplay.getRoot());
@@ -212,11 +215,11 @@ public class MainWindow extends UiPart<Stage> {
         List<String> undoHistory = logic.getUndoCommandHistory();
         List<String> redoHistory = logic.getRedoCommandHistory();
         System.out.println("Inside handleHistory: printing");
-        for (String h: redoHistory) {
+        for (String h : redoHistory) {
             System.out.println(h);
         }
         System.out.println("=====================<< Current State >>=====================");
-        for (String h: undoHistory) {
+        for (String h : undoHistory) {
             System.out.println(h);
         }
     }
@@ -229,8 +232,6 @@ public class MainWindow extends UiPart<Stage> {
         entityListPanel = new EntityListPanel(logic.getFilteredParticipantList());
 
         listPanelPlaceholder.getChildren().set(0, entityListPanel.getRoot());
-        listPanelPlaceholder.setStyle("-fx-background-color: #5d6d7e");
-        logger.info("Color of entity list placeholder is: " + listPanelPlaceholder.getStyle());
     }
 
     /**
@@ -241,8 +242,6 @@ public class MainWindow extends UiPart<Stage> {
         entityListPanel = new EntityListPanel(logic.getSortedTeamList());
 
         listPanelPlaceholder.getChildren().set(0, entityListPanel.getRoot());
-        listPanelPlaceholder.setStyle("-fx-background-color: #5d6d7e");
-        logger.info("Color of entity list placeholder is: " + listPanelPlaceholder.getStyle());
     }
 
     /**
@@ -253,8 +252,6 @@ public class MainWindow extends UiPart<Stage> {
         entityListPanel = new EntityListPanel(logic.getTopKTeams());
 
         listPanelPlaceholder.getChildren().set(0, entityListPanel.getRoot());
-        listPanelPlaceholder.setStyle("-fx-background-color: #5d6d7e");
-        logger.info("Color of entity list placeholder is: " + listPanelPlaceholder.getStyle());
     }
 
     /**
@@ -264,9 +261,6 @@ public class MainWindow extends UiPart<Stage> {
     private void displayTeamList() {
         entityListPanel = new EntityListPanel(logic.getFilteredTeamList());
         listPanelPlaceholder.getChildren().set(0, entityListPanel.getRoot());
-        listPanelPlaceholder.setStyle("-fx-background-color:#abb2b9");
-        logger.info("Color of entity list placeholder is: " + listPanelPlaceholder.getStyle());
-
     }
 
     /**
@@ -276,9 +270,6 @@ public class MainWindow extends UiPart<Stage> {
     private void displayMentorList() {
         entityListPanel = new EntityListPanel(logic.getFilteredMentorList());
         listPanelPlaceholder.getChildren().set(0, entityListPanel.getRoot());
-        listPanelPlaceholder.setStyle("-fx-background-color: #17202a");
-        logger.info("Color of entity list placeholder is: " + listPanelPlaceholder.getStyle());
-
     }
 
     /**
@@ -288,9 +279,6 @@ public class MainWindow extends UiPart<Stage> {
     private void displayHistory() {
         commandListPanel = new CommandListPanel(logic.getCommandHistory());
         listPanelPlaceholder.getChildren().set(0, commandListPanel.getRoot());
-        listPanelPlaceholder.setStyle("-fx-background-color: #17202a");
-        logger.info("Color of entity list placeholder is: " + listPanelPlaceholder.getStyle());
-
     }
 
     public EntityListPanel getEntityListPanel() {
@@ -345,6 +333,9 @@ public class MainWindow extends UiPart<Stage> {
             handleHistory(); //DEBUG
 
             CommandType commandType = commandResult.getCommandType();
+            if (commandType == null) {
+                this.fireButton(lastFired);
+            }
             logger.info("CommandResult has the prefix: " + commandType);
             //TODO: if the current panel is the one being changed, do not change the entityListPlaceholder
             switch (commandType) {
@@ -354,18 +345,19 @@ public class MainWindow extends UiPart<Stage> {
                 break;
             case T:
                 this.fireButton(teamsButton);
-                lastFired = mentorsButton;
+                lastFired = teamsButton;
                 break;
             case P:
                 this.fireButton(participantsButton);
-                lastFired = mentorsButton;
+                lastFired = participantsButton;
                 break;
             case H:
                 this.fireButton(historyButton);
-                lastFired = mentorsButton;
+                lastFired = historyButton;
                 break;
             case L:
                 this.fireButton(leaderboardButton);
+                lastFired = leaderboardButton;
                 break;
             case K:
                 displayTopK();
@@ -377,7 +369,9 @@ public class MainWindow extends UiPart<Stage> {
             }
             return commandResult;
         } catch (CommandException | ParseException | AlfredModelHistoryException e) {
-            this.fireButton(lastFired);
+            if (lastFired != null) {
+                this.fireButton(lastFired);
+            }
             logger.info("Invalid command: " + commandText);
             resultDisplay.setFeedbackToUser(e.getMessage());
             throw e;
