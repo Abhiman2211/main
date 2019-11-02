@@ -53,6 +53,8 @@ public class AddScoreCommand extends ScoreCommand {
         }
 
         logger.info("Adding " + this.score + " to Score of Team " + this.id);
+        model.updateHistory(this);
+        model.recordCommandExecution(this.getCommandInputString());
         return new CommandResult(String.format(MESSAGE_SCORE_TEAM_SUCCESS,
                 score.toString(), teamToScore.getName().toString()), CommandType.T);
     }
@@ -60,7 +62,7 @@ public class AddScoreCommand extends ScoreCommand {
     @Override
     public boolean equals(Object other) {
         return other == this // short circuit if same object
-                || (other instanceof SetScoreCommand // instanceof handles nulls
+                || (other instanceof AddScoreCommand // instanceof handles nulls
                 && id.equals(((AddScoreCommand) other).id))
                 && score.equals(((AddScoreCommand) other).score);
     }
