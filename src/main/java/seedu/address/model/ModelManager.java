@@ -297,10 +297,6 @@ public class ModelManager implements Model {
         return this.sortedTeam;
     }
 
-    public SortedList<Team> getTopKTeams() {
-        return this.topKTeams;
-    }
-
     /**
      * Resets the filtered lists to display all entities in the list.
      */
@@ -789,41 +785,23 @@ public class ModelManager implements Model {
         }
     }
 
-    //=========== Leader-Board methods ==================================================================
+    //=========== Leader Board methods ==================================================================
 
     /**
-     * Clears up any formatting and sorting from the sorted list and resets it to its
-     * original form.
-     */
-    private void initialiseSortedList() {
-        this.sortedTeam = new SortedList<>(this.teamList.getSpecificTypedList());
-    }
-
-    /**
-     * Arranges the sorted team list {@code sortedTeam} to sort the current teams stored
+     * Resets the {@code sortedTeam} list to its original order without any sorting, then  arranges
+     * it to sort the current teams stored
      * in Alfred in descending order of their score. Implements additional Comparators {@code comparators}
      * for tie-breaking if specified by the user.
      */
     public final void setSimpleLeaderboard(ArrayList<Comparator<Team>> comparators) {
-        initialiseSortedList();
+        this.sortedTeam = new SortedList<>(this.teamList.getSpecificTypedList());
         for (Comparator<Team> comparator : comparators) {
             this.sortedTeam.setComparator(comparator);
         }
+        // Set the comparator to rank by score last as in-place sorting is taking place, so ranking by score
+        // in the end will rank teams by their score and retain the tie-breaks obtained from the previously applied
+        // comparators.
         this.sortedTeam.setComparator(Comparators.rankByScore());
-    }
-
-    /**
-     * Arranges the sorted team list {@code sortedTeam} to sort the current teams stored in Alfred
-     * in descending order of their score, implementing additional Comparators {@code comparators}
-     * for tie-breaking if specified by the user. Randomly selects the winner if two teams are still
-     * tied after the additional comparators.
-     *
-     */
-    public void setLeaderboardWithRandom(ArrayList<Comparator<Team>> comparators) {
-        setSimpleLeaderboard(comparators);
-        ObservableList<Team> teams = FXCollections.observableArrayList(sortedTeam);
-        teams = LeaderboardUtil.randomWinnersGenerator(teams, teams.size(), comparators);
-        this.sortedTeam = new SortedList<>(teams);
     }
 
     /**
@@ -833,17 +811,13 @@ public class ModelManager implements Model {
      *
      */
     public final void setTopK(int k, ArrayList<Comparator<Team>> comparators) {
-        initialiseSortedList();
-        for (Comparator<Team> comparator : comparators) {
-            this.sortedTeam.setComparator(comparator);
-        }
-        this.sortedTeam.setComparator(Comparators.rankByScore());
+        setSimpleLeaderboard(comparators);
 
         // Create a copy of the sorted teams from which teams can be removed without
         // damaging the original sorted teams list.
         ObservableList<Team> teams = FXCollections.observableArrayList(sortedTeam);
         teams = LeaderboardUtil.topKWithTie(teams, k, comparators);
-        this.topKTeams = new SortedList<>(teams);
+        this.sortedTeam = new SortedList<>(teams);
     }
 
     /**
@@ -856,7 +830,7 @@ public class ModelManager implements Model {
         setSimpleLeaderboard(comparators);
         ObservableList<Team> teams = FXCollections.observableArrayList(sortedTeam);
         teams = LeaderboardUtil.randomWinnersGenerator(teams, k, comparators);
-        this.topKTeams = new SortedList<>(teams);
+        this.sortedTeam = new SortedList<>(teams);
     }
 
     //=========== Find methods ==================================================================
@@ -939,32 +913,41 @@ public class ModelManager implements Model {
     }
 
     /**
-     * This method will undo the effects of the previous command executed and return the state of
-     * the ModelManager to the state where the previous command executed is undone.
-     *
+     * This method will undo the effects of the previous {@code numToUndo} command(s) executed and return the state of
+     * the ModelManager to the state where these previous command(s) executed is undone.
+     * @param numToUndo number of commands in ModelHistory to undo.
      * @throws AlfredModelHistoryException
      */
-    public void undo() throws AlfredModelHistoryException {
-        if (this.history.canUndo()) {
-            ModelHistoryRecord hr = this.history.undo();
+    public void undo(int numToUndo) throws AlfredModelHistoryException {
+        if (this.history.canUndo(numToUndo)) {
+            ModelHistoryRecord hr = this.history.undo(numToUndo);
             updateModelState(hr);
         } else {
             throw new AlfredModelHistoryException("Unable to undo.");
         }
+        //Saves the 3 EntityLists to Storage
+        this.saveList(PrefixType.P);
+        this.saveList(PrefixType.M);
+        this.saveList(PrefixType.T);
     }
 
     /**
-     * This method will return the ModelManager to the state where the previous command executed is redone.
-     *
+     * This method will return the ModelManager to the state where the next {@code numToRedo} command(s) executed
+     * is/are redone.
+     * @param numToRedo number of commands in ModelHistory to redo.
      * @throws AlfredModelHistoryException
      */
-    public void redo() throws AlfredModelHistoryException {
-        if (this.history.canRedo()) {
-            ModelHistoryRecord hr = this.history.redo();
+    public void redo(int numToRedo) throws AlfredModelHistoryException {
+        if (this.history.canRedo(numToRedo)) {
+            ModelHistoryRecord hr = this.history.redo(numToRedo);
             updateModelState(hr);
         } else {
             throw new AlfredModelHistoryException("Unable to redo.");
         }
+        //Saves the 3 EntityLists to Storage
+        this.saveList(PrefixType.P);
+        this.saveList(PrefixType.M);
+        this.saveList(PrefixType.T);
     }
 
     /**

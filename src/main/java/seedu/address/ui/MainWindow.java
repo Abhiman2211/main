@@ -1,6 +1,5 @@
 package seedu.address.ui;
 
-import java.util.List;
 import java.util.logging.Logger;
 
 import com.jfoenix.controls.JFXButton;
@@ -11,11 +10,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.AlfredModelHistoryException;
@@ -154,15 +153,19 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Sets the handlers for the events generated whenever the up and down arrow keys are pressed.
+     * Sets the handlers for the events generated whenever the alt modifier key, as well
+     * as the up/down arrow keys are pressed.
      */
     private void setCommandNavigationHandler() {
         this.commandBoxPlaceholder.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            if (event.getCode() == KeyCode.UP) {
+            KeyCombination upCombo = new KeyCodeCombination(KeyCode.UP, KeyCombination.ALT_DOWN);
+            KeyCombination downCombo = new KeyCodeCombination(KeyCode.DOWN, KeyCombination.ALT_DOWN);
+
+            if (upCombo.match(event)) {
                 commandBox.setTextField(logic.getPrevCommandString());
             }
 
-            if (event.getCode() == KeyCode.DOWN) {
+            if (downCombo.match(event)) {
                 commandBox.setTextField(logic.getNextCommandString());
             }
         });
@@ -209,22 +212,6 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
-     * Handles the display of Command History in the GUI.
-     */
-    private void handleHistory() {
-        List<String> undoHistory = logic.getUndoCommandHistory();
-        List<String> redoHistory = logic.getRedoCommandHistory();
-        System.out.println("Inside handleHistory: printing");
-        for (String h : redoHistory) {
-            System.out.println(h);
-        }
-        System.out.println("=====================<< Current State >>=====================");
-        for (String h : undoHistory) {
-            System.out.println(h);
-        }
-    }
-
-    /**
      * Displays the list of Participants in Model and Storage on Graphical User Interface.
      */
     @FXML
@@ -240,16 +227,6 @@ public class MainWindow extends UiPart<Stage> {
     @FXML
     private void displayLeaderboard() {
         entityListPanel = new EntityListPanel(logic.getSortedTeamList());
-
-        listPanelPlaceholder.getChildren().set(0, entityListPanel.getRoot());
-    }
-
-    /**
-     * Displays the top K teams on the Graphical User Interface.
-     */
-    @FXML
-    private void displayTopK() {
-        entityListPanel = new EntityListPanel(logic.getTopKTeams());
 
         listPanelPlaceholder.getChildren().set(0, entityListPanel.getRoot());
     }
@@ -330,7 +307,6 @@ public class MainWindow extends UiPart<Stage> {
             if (commandResult.isExit()) {
                 handleExit();
             }
-            handleHistory(); //DEBUG
 
             CommandType commandType = commandResult.getCommandType();
             if (commandType == null) {
@@ -359,10 +335,6 @@ public class MainWindow extends UiPart<Stage> {
                 this.fireButton(leaderboardButton);
                 lastFired = leaderboardButton;
                 break;
-            case K:
-                displayTopK();
-                break;
-
             default:
                 logger.info("The command does not edit any of the list of Entity");
                 break;
