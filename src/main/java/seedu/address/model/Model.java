@@ -33,11 +33,6 @@ public interface Model {
     Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = unused -> true;
 
     /**
-     * Initializes the model.
-     */
-    void initialize();
-
-    /**
      * Replaces user prefs data with the data in {@code userPrefs}.
      */
     void setUserPrefs(ReadOnlyUserPrefs userPrefs);
@@ -136,7 +131,7 @@ public interface Model {
 
     void updateTeam(Id teamId, Team team) throws AlfredException;
 
-    void updateTeamScore(Team team, Score score) throws AlfredException;
+    void setTeamScore(Team team, Score score) throws AlfredException;
 
     void addTeamScore(Team team, Score score) throws AlfredException;
 
