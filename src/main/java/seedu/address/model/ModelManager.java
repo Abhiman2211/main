@@ -62,12 +62,9 @@ public class ModelManager implements Model {
     protected SortedList<Team> sortedTeam;
     protected SortedList<Team> topKTeams;
 
-    // TODO: Remove the null values which are a placeholder due to the multiple
-    // constructors.
-    // Also will have to change the relevant attributes to final.
-    private AlfredStorage storage = null;
-    private ModelHistory history = null;
-    private CommandHistory commandHistory = null;
+    private AlfredStorage storage;
+    private ModelHistory history;
+    private CommandHistory commandHistory;
     private final UserPrefs userPrefs;
 
     // This constructor is only used for ModelManagerStub
@@ -909,7 +906,6 @@ public class ModelManager implements Model {
     }
 
     // ========== ModelHistory Methods ===============
-
     /**
      * This method will update the ModelHistoryManager object with the current state
      * of the model. This method is expected to be called during the `execute()`
@@ -996,28 +992,6 @@ public class ModelManager implements Model {
     }
 
     /**
-     * Gets a String detailing the previously executed commands that can be undone
-     * by the user.
-     */
-    public String getCommandHistoryString() {
-        return this.history.getCommandHistoryString();
-    }
-
-    /**
-     * Returns a List of Strings describing the commands that can be undone.
-     */
-    public List<String> getUndoCommandHistory() {
-        return this.history.getUndoCommandHistory();
-    }
-
-    /**
-     * Returns a List of Strings describing the commands that can be redone.
-     */
-    public List<String> getRedoCommandHistory() {
-        return this.history.getRedoCommandHistory();
-    }
-
-    /**
      * Returns a List of CommandRecords describing the commands that can be
      * undone/redone
      */
@@ -1025,14 +999,25 @@ public class ModelManager implements Model {
         return this.history.getCommandHistory();
     }
 
+    // ========== CommandHistory Methods ===============
+    /**
+     * Records the command string of a successfully executed commands.
+     * @param commandInputString text input into Alfred for command execution.
+     */
     public void recordCommandExecution(String commandInputString) {
         this.commandHistory.saveCommandExecutionString(commandInputString);
     }
 
+    /**
+     * Gets the command string of a previous successfully executed command.
+     */
     public String getPrevCommandString() {
         return this.commandHistory.getPrevCommandString();
     }
 
+    /**
+     * Gets the command string of the next successfully executed command.
+     */
     public String getNextCommandString() {
         return this.commandHistory.getNextCommandString();
     }
